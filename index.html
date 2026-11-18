@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Synthwave Arcade Hub – Calliope & Meteor</title>
+  <title>Synthwave Arcade Hub – Calliope, Meteor & CAPTCHA</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Share+Tech+Mono&display=swap');
 
@@ -82,9 +82,9 @@
       color: var(--text-main);
       border: 2px solid var(--accent-cyan);
       border-radius: 10px;
-      padding: 18px;
+      padding: 16px;
       font-family: inherit;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 600;
       text-transform: uppercase;
       cursor: pointer;
@@ -101,9 +101,9 @@
 
     .game-select-btn small {
       display: block;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      margin-top: 6px;
+      margin-top: 4px;
       font-weight: 400;
       font-family: 'Share Tech Mono', monospace;
     }
@@ -215,7 +215,7 @@
       list-style: none;
       margin: 0;
       padding: 0;
-      max-height: 150px;
+      max-height: 130px;
       overflow-y: auto;
       font-size: 0.8rem;
       font-family: 'Share Tech Mono', monospace;
@@ -338,7 +338,7 @@
       box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
     }
 
-    /* Canvas */
+    /* Canvas & CAPTCHA Grid */
     .canvas-frame {
       position: relative;
       display: inline-block;
@@ -353,6 +353,60 @@
     canvas {
       display: block;
       image-rendering: pixelated;
+    }
+
+    /* CAPTCHA Styles */
+    .captcha-box {
+      background: #05030a;
+      border: 2px solid var(--accent-cyan);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+    }
+
+    .captcha-instruction {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+
+    .captcha-instruction span {
+      color: var(--accent-pink);
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .captcha-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 270px;
+      margin: 0 auto;
+    }
+
+    .captcha-tile {
+      aspect-ratio: 1;
+      background: var(--bg-card);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .captcha-tile:hover {
+      border-color: var(--accent-purple);
+    }
+
+    .captcha-tile.selected {
+      background: rgba(6, 182, 212, 0.25);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.5);
     }
 
     /* Buttons */
@@ -419,7 +473,7 @@
       font-family: 'Share Tech Mono', monospace;
     }
 
-    /* Rangliste & Speicher-Box */
+    /* Ranglisten & Speicher-Box */
     .leaderboard-section {
       background: var(--bg-card);
       border: 1px solid rgba(236, 72, 153, 0.3);
@@ -526,6 +580,10 @@
         🚀 Spiel 2: Meteor-Abwehr
         <small>Shooter & Strategie im Weltall</small>
       </button>
+      <button class="game-select-btn" id="btnLaunchGame3" style="border-color: var(--accent-purple);">
+        🤖 Spiel 3: Roboter-Check (CAPTCHA)
+        <small>Beweise, dass du kein Roboter bist!</small>
+      </button>
 
       <!-- COMMUNITY FEEDBACK SEKTION -->
       <div class="feedback-section">
@@ -566,7 +624,6 @@
 
       <button class="restart-btn" id="btnReactRestart">Spiel starten</button>
 
-      <!-- RANGLISTE SPIEL 1 -->
       <div class="leaderboard-section">
         <div class="save-score-box" id="saveBox1">
           <input type="text" id="playerName1" value="" maxlength="16" placeholder="Dein Name..." />
@@ -622,7 +679,6 @@
 
       <button class="restart-btn" id="btnRestart">Spiel starten</button>
 
-      <!-- RANGLISTE SPIEL 2 -->
       <div class="leaderboard-section">
         <div class="save-score-box" id="saveBox2">
           <input type="text" id="playerName2" value="" maxlength="16" placeholder="Dein Name..." />
@@ -635,16 +691,46 @@
       </div>
     </div>
 
+    <!-- SPIEL 3: ROBOTER-CHECK (CAPTCHA) -->
+    <div id="game3Container" class="hidden">
+      <button class="back-menu-btn" id="btnBackToMenu3">← Zurück zur Auswahl</button>
+
+      <div class="hud">
+        <div class="hud-box">Gelöste Tests: <span id="captchaScore">0</span></div>
+        <div class="hud-box">Status: <span id="captchaStatusTitle">Ausstehend</span></div>
+      </div>
+
+      <div class="captcha-box">
+        <div class="captcha-instruction" id="captchaInstruction">Wähle alle Kacheln mit: <span>🚀</span></div>
+        <div class="captcha-grid" id="captchaGrid"></div>
+      </div>
+
+      <div class="status-msg" id="captchaMsg">Wähle die passenden Symbole aus!</div>
+
+      <button class="restart-btn" id="btnVerifyCaptcha">Verifizieren</button>
+
+      <div class="leaderboard-section">
+        <div class="save-score-box" id="saveBox3">
+          <input type="text" id="playerName3" value="" maxlength="16" placeholder="Dein Name..." />
+          <button id="btnSaveScore3">Speichern</button>
+        </div>
+        <div class="leaderboard-header">
+          <div class="leaderboard-title">Top 5 Menschen (Erfolge)</div>
+        </div>
+        <ul class="leaderboard-list" id="leaderboardList3"></ul>
+      </div>
+    </div>
+
   </div>
 
   <script>
     // ==========================================
-    // COMMUNITY FEEDBACK SYSTEM (LOCALSTORAGE)
+    // COMMUNITY FEEDBACK SYSTEM
     // ==========================================
     const FEEDBACK_KEY = 'synth_arcade_feedback';
     let feedbackList = JSON.parse(localStorage.getItem(FEEDBACK_KEY)) || [
       { id: 1, text: 'Mega geile Retro-Vibes hier!', sentiment: 'up', upvotes: 4, downvotes: 0 },
-      { id: 2, text: 'Meteor-Abwehr ist ganz schön schwer!', sentiment: 'up', upvotes: 2, downvotes: 1 }
+      { id: 2, text: 'Das CAPTCHA-Spiel ist super witzig!', sentiment: 'up', upvotes: 3, downvotes: 0 }
     ];
 
     function renderFeedback() {
@@ -700,28 +786,34 @@
 
 
     // ==========================================
-    // RANGLISTEN-SYSTEM & MANUELLES SPEICHERN
+    // RANGLISTEN-SYSTEM & SYNCHRONISATION
     // ==========================================
     const STORAGE_KEY_1 = 'synth_arcade_reaction';
     const STORAGE_KEY_2 = 'synth_arcade_meteor';
+    const STORAGE_KEY_3 = 'synth_arcade_captcha';
 
     let topRuns1 = JSON.parse(localStorage.getItem(STORAGE_KEY_1)) || [];
     let topRuns2 = JSON.parse(localStorage.getItem(STORAGE_KEY_2)) || [];
+    let topRuns3 = JSON.parse(localStorage.getItem(STORAGE_KEY_3)) || [];
 
     const playerNameInput1 = document.getElementById('playerName1');
     const playerNameInput2 = document.getElementById('playerName2');
+    const playerNameInput3 = document.getElementById('playerName3');
 
-    playerNameInput1.addEventListener('input', () => { playerNameInput2.value = playerNameInput1.value; });
-    playerNameInput2.addEventListener('input', () => { playerNameInput1.value = playerNameInput2.value; });
+    [playerNameInput1, playerNameInput2, playerNameInput3].forEach(input => {
+      input.addEventListener('input', (e) => {
+        playerNameInput1.value = e.target.value;
+        playerNameInput2.value = e.target.value;
+        playerNameInput3.value = e.target.value;
+      });
+    });
 
     let lastReactionTime = null;
     let lastMeteorScore = null;
+    let lastCaptchaScore = null;
 
     document.getElementById('btnSaveScore1').addEventListener('click', () => {
-      if (!lastReactionTime) {
-        alert('Keine gültige Reaktionszeit vorhanden!');
-        return;
-      }
+      if (!lastReactionTime) { alert('Keine gültige Zeit vorhanden!'); return; }
       const name = playerNameInput1.value.trim() || 'Anonym';
       topRuns1.push({ name, score: lastReactionTime });
       topRuns1.sort((a, b) => a.score - b.score);
@@ -729,14 +821,11 @@
       localStorage.setItem(STORAGE_KEY_1, JSON.stringify(topRuns1));
       renderLeaderboard1();
       lastReactionTime = null;
-      alert('Zeit in Bestenliste gespeichert!');
+      alert('Gespeichert!');
     });
 
     document.getElementById('btnSaveScore2').addEventListener('click', () => {
-      if (lastMeteorScore === null || lastMeteorScore <= 0) {
-        alert('Kein gültiger Score zum Speichern!');
-        return;
-      }
+      if (lastMeteorScore === null || lastMeteorScore <= 0) { alert('Kein Score vorhanden!'); return; }
       const name = playerNameInput2.value.trim() || 'Pilot';
       topRuns2.push({ name, score: lastMeteorScore });
       topRuns2.sort((a, b) => b.score - a.score);
@@ -744,36 +833,43 @@
       localStorage.setItem(STORAGE_KEY_2, JSON.stringify(topRuns2));
       renderLeaderboard2();
       lastMeteorScore = null;
-      alert('Score in Bestenliste gespeichert!');
+      alert('Gespeichert!');
+    });
+
+    document.getElementById('btnSaveScore3').addEventListener('click', () => {
+      if (lastCaptchaScore === null || lastCaptchaScore <= 0) { alert('Kein Score vorhanden!'); return; }
+      const name = playerNameInput3.value.trim() || 'Mensch';
+      topRuns3.push({ name, score: lastCaptchaScore });
+      topRuns3.sort((a, b) => b.score - a.score);
+      topRuns3 = topRuns3.slice(0, 5);
+      localStorage.setItem(STORAGE_KEY_3, JSON.stringify(topRuns3));
+      renderLeaderboard3();
+      lastCaptchaScore = null;
+      alert('Gespeichert!');
     });
 
     function renderLeaderboard1() {
       const list = document.getElementById('leaderboardList1');
-      list.innerHTML = '';
-      if (topRuns1.length === 0) {
-        list.innerHTML = '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>';
-        document.getElementById('bestReactDisplay').textContent = '-';
-        return;
-      }
-      document.getElementById('bestReactDisplay').textContent = topRuns1[0].score;
-      topRuns1.forEach((entry, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>#${index + 1} ${escapeHtml(entry.name)}</span><span>${entry.score} ms</span>`;
-        list.appendChild(li);
+      list.innerHTML = topRuns1.length === 0 ? '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>' : '';
+      if(topRuns1.length > 0) document.getElementById('bestReactDisplay').textContent = topRuns1[0].score;
+      topRuns1.forEach((entry, i) => {
+        list.innerHTML += `<li><span>#${i+1} ${escapeHtml(entry.name)}</span><span>${entry.score} ms</span></li>`;
       });
     }
 
     function renderLeaderboard2() {
       const list = document.getElementById('leaderboardList2');
-      list.innerHTML = '';
-      if (topRuns2.length === 0) {
-        list.innerHTML = '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>';
-        return;
-      }
-      topRuns2.forEach((entry, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>#${index + 1} ${escapeHtml(entry.name)}</span><span>${entry.score} Pkt</span>`;
-        list.appendChild(li);
+      list.innerHTML = topRuns2.length === 0 ? '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>' : '';
+      topRuns2.forEach((entry, i) => {
+        list.innerHTML += `<li><span>#${i+1} ${escapeHtml(entry.name)}</span><span>${entry.score} Pkt</span></li>`;
+      });
+    }
+
+    function renderLeaderboard3() {
+      const list = document.getElementById('leaderboardList3');
+      list.innerHTML = topRuns3.length === 0 ? '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>' : '';
+      topRuns3.forEach((entry, i) => {
+        list.innerHTML += `<li><span>#${i+1} ${escapeHtml(entry.name)}</span><span>${entry.score} Erfolge</span></li>`;
       });
     }
 
@@ -785,6 +881,7 @@
 
     renderLeaderboard1();
     renderLeaderboard2();
+    renderLeaderboard3();
 
 
     // ==========================================
@@ -794,11 +891,12 @@
     const mainSubtitle = document.getElementById('mainSubtitle');
     const game1Container = document.getElementById('game1Container');
     const game2Container = document.getElementById('game2Container');
+    const game3Container = document.getElementById('game3Container');
 
     document.getElementById('btnLaunchGame1').addEventListener('click', () => {
       mainMenu.classList.add('hidden');
       game1Container.classList.remove('hidden');
-      mainSubtitle.textContent = 'Klicke auf Start, um loszulegen!';
+      mainSubtitle.textContent = 'Reagiere blitzschnell auf Knöpfe!';
       prepareReactionGame();
     });
 
@@ -807,6 +905,13 @@
       game2Container.classList.remove('hidden');
       mainSubtitle.textContent = 'Steuerung: ← → Bewegen | Leertaste Feuern';
       prepareMeteorGame();
+    });
+
+    document.getElementById('btnLaunchGame3').addEventListener('click', () => {
+      mainMenu.classList.add('hidden');
+      game3Container.classList.remove('hidden');
+      mainSubtitle.textContent = 'Löse das CAPTCHA, um deine Menschlichkeit zu beweisen!';
+      initCaptchaGame();
     });
 
     document.getElementById('btnBackToMenu1').addEventListener('click', () => {
@@ -823,16 +928,113 @@
       stopMeteorGame();
     });
 
+    document.getElementById('btnBackToMenu3').addEventListener('click', () => {
+      game3Container.classList.add('hidden');
+      mainMenu.classList.remove('hidden');
+      mainSubtitle.textContent = 'Wähle dein Spiel aus';
+    });
+
 
     // ==========================================
-    // SPIEL 1: BLITZ-REAKTION LOGIK (Manueller Start)
+    // SPIEL 3: ROBOTER-CHECK (CAPTCHA LOGIK)
+    // ==========================================
+    const symbols = ['🚀', '🛸', '👾', '⭐', '🪐', '👽', '☄️'];
+    let targetSymbol = '';
+    let captchaTilesData = [];
+    let captchaScoreCount = 0;
+
+    function initCaptchaGame() {
+      captchaScoreCount = 0;
+      document.getElementById('captchaScore').textContent = captchaScoreCount;
+      document.getElementById('captchaStatusTitle').textContent = 'Test läuft';
+      generateNewCaptcha();
+    }
+
+    function generateNewCaptcha() {
+      targetSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+      document.getElementById('captchaInstruction').innerHTML = `Wähle alle Kacheln mit: <span>${targetSymbol}</span>`;
+      document.getElementById('captchaMsg').textContent = 'Klicke die passenden Symbole an!';
+      document.getElementById('captchaMsg').style.color = 'var(--accent-pink)';
+
+      const correctCount = 2 + Math.floor(Math.random() * 3);
+      captchaTilesData = [];
+
+      for (let i = 0; i < 9; i++) {
+        captchaTilesData.push({ id: i, symbol: '', isTarget: false, selected: false });
+      }
+
+      let placed = 0;
+      while (placed < correctCount) {
+        let idx = Math.floor(Math.random() * 9);
+        if (!captchaTilesData[idx].isTarget) {
+          captchaTilesData[idx].isTarget = true;
+          captchaTilesData[idx].symbol = targetSymbol;
+          placed++;
+        }
+      }
+
+      captchaTilesData.forEach(tile => {
+        if (!tile.isTarget) {
+          let randomSym;
+          do {
+            randomSym = symbols[Math.floor(Math.random() * symbols.length)];
+          } while (randomSym === targetSymbol);
+          tile.symbol = randomSym;
+        }
+      });
+
+      renderCaptchaGrid();
+    }
+
+    function renderCaptchaGrid() {
+      const grid = document.getElementById('captchaGrid');
+      grid.innerHTML = '';
+      captchaTilesData.forEach(tile => {
+        const div = document.createElement('div');
+        div.className = `captcha-tile ${tile.selected ? 'selected' : ''}`;
+        div.textContent = tile.symbol;
+        div.addEventListener('click', () => {
+          tile.selected = !tile.selected;
+          div.classList.toggle('selected', tile.selected);
+        });
+        grid.appendChild(div);
+      });
+    }
+
+    document.getElementById('btnVerifyCaptcha').addEventListener('click', () => {
+      let allCorrect = true;
+      captchaTilesData.forEach(tile => {
+        if (tile.isTarget !== tile.selected) {
+          allCorrect = false;
+        }
+      });
+
+      const msg = document.getElementById('captchaMsg');
+      if (allCorrect) {
+        captchaScoreCount++;
+        document.getElementById('captchaScore').textContent = captchaScoreCount;
+        lastCaptchaScore = captchaScoreCount;
+        msg.textContent = 'Mensch erkannt! Nächste Runde...';
+        msg.style.color = 'var(--accent-green)';
+        document.getElementById('captchaStatusTitle').textContent = 'Verifiziert ✓';
+        setTimeout(generateNewCaptcha, 1200);
+      } else {
+        msg.textContent = 'Falsch! Bist du ein Roboter? Versuch es nochmal.';
+        msg.style.color = '#ef4444';
+        document.getElementById('captchaStatusTitle').textContent = 'Fehler ❌';
+      }
+    });
+
+
+    // ==========================================
+    // SPIEL 1: BLITZ-REAKTION LOGIK
     // ==========================================
     const g1Canvas = document.getElementById('game1Canvas');
     const g1Ctx = g1Canvas.getContext('2d');
     const reactDisplay = document.getElementById('reactDisplay');
     const reactStatusMsg = document.getElementById('reactStatusMsg');
 
-    let g1State = 'idle'; // 'idle', 'wait', 'active', 'result', 'falseStart'
+    let g1State = 'idle';
     let g1StartTime = 0;
     let g1TimerId = null;
     let g1RequiredKey = 'A';
@@ -939,7 +1141,7 @@
 
 
     // ==========================================
-    // SPIEL 2: METEOR-ABWEHR LOGIK (Manueller Start)
+    // SPIEL 2: METEOR-ABWEHR LOGIK
     // ==========================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -1208,7 +1410,6 @@
       ctx.fillStyle = '#05030a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Schiff anzeigen
       ctx.fillStyle = '#06b6d4';
       let px = playerX * CELL_SIZE;
       let py = playerY * CELL_SIZE;

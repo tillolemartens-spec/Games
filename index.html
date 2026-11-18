@@ -132,6 +132,138 @@
       display: none !important;
     }
 
+    /* Feedback-Bereich im Menü */
+    .feedback-section {
+      margin-top: 15px;
+      background: var(--bg-card);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: left;
+    }
+
+    .feedback-section h3 {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .feedback-input-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .feedback-input-box textarea {
+      width: 100%;
+      height: 60px;
+      background: #0b061a;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      resize: none;
+      outline: none;
+    }
+
+    .feedback-input-box textarea:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .feedback-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sentiment-select {
+      background: #0b061a;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .feedback-submit-btn {
+      background: var(--accent-pink);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .feedback-submit-btn:hover {
+      background: #db2777;
+    }
+
+    .feedback-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .feedback-item {
+      background: rgba(11, 6, 26, 0.6);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+
+    .feedback-item-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .feedback-item-body {
+      word-break: break-word;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .feedback-vote-box {
+      display: flex;
+      gap: 10px;
+      font-size: 0.75rem;
+    }
+
+    .vote-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .vote-btn:hover {
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+    }
+
     /* HUD */
     .hud {
       display: grid;
@@ -410,6 +542,22 @@
         🚀 Spiel 2: Meteor-Abwehr
         <small>Shooter & Strategie im Weltall</small>
       </button>
+
+      <!-- COMMUNITY FEEDBACK SEKTION -->
+      <div class="feedback-section">
+        <h3>Community Feedback</h3>
+        <div class="feedback-input-box">
+          <textarea id="feedbackText" placeholder="Dein Feedback oder Idee..." maxlength="120"></textarea>
+          <div class="feedback-row">
+            <select id="feedbackSentiment" class="sentiment-select">
+              <option value="up">👍 Daumen hoch</option>
+              <option value="down">👎 Daumen runter</option>
+            </select>
+            <button class="feedback-submit-btn" id="btnSendFeedback">Absenden</button>
+          </div>
+        </div>
+        <ul class="feedback-list" id="feedbackList"></ul>
+      </div>
     </div>
 
     <!-- SPIEL 1: BLITZ-REAKTION -->
@@ -509,6 +657,67 @@
 
   <script>
     // ==========================================
+    // COMMUNITY FEEDBACK SYSTEM (LOCALSTORAGE)
+    // ==========================================
+    const FEEDBACK_KEY = 'synth_arcade_feedback';
+    let feedbackList = JSON.parse(localStorage.getItem(FEEDBACK_KEY)) || [
+      { id: 1, text: 'Mega geile Retro-Vibes hier!', sentiment: 'up', upvotes: 4, downvotes: 0 },
+      { id: 2, text: 'Meteor-Abwehr ist ganz schön schwer!', sentiment: 'up', upvotes: 2, downvotes: 1 }
+    ];
+
+    function renderFeedback() {
+      const list = document.getElementById('feedbackList');
+      list.innerHTML = '';
+      feedbackList.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'feedback-item';
+        const icon = item.sentiment === 'up' ? '👍' : '👎';
+        li.innerHTML = `
+          <div class="feedback-item-header">
+            <span>${icon} Feedback</span>
+          </div>
+          <div class="feedback-item-body">${escapeHtml(item.text)}</div>
+          <div class="feedback-vote-box">
+            <button class="vote-btn" onclick="voteFeedback(${item.id}, 'up')">👍 (${item.upvotes})</button>
+            <button class="vote-btn" onclick="voteFeedback(${item.id}, 'down')">👎 (${item.downvotes})</button>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(feedbackList));
+    }
+
+    function voteFeedback(id, type) {
+      const item = feedbackList.find(f => f.id === id);
+      if (item) {
+        if (type === 'up') item.upvotes++;
+        if (type === 'down') item.downvotes++;
+        renderFeedback();
+      }
+    }
+
+    document.getElementById('btnSendFeedback').addEventListener('click', () => {
+      const textVal = document.getElementById('feedbackText').value.trim();
+      const sentimentVal = document.getElementById('feedbackSentiment').value;
+      if (!textVal) {
+        alert('Bitte gib einen Text ein!');
+        return;
+      }
+      feedbackList.unshift({
+        id: Date.now(),
+        text: textVal,
+        sentiment: sentimentVal,
+        upvotes: 0,
+        downvotes: 0
+      });
+      document.getElementById('feedbackText').value = '';
+      renderFeedback();
+    });
+
+    renderFeedback();
+
+
+    // ==========================================
     // RANGLISTEN-SYSTEM & MANUELLES SPEICHERN
     // ==========================================
     const STORAGE_KEY_1 = 'synth_arcade_reaction';
@@ -520,7 +729,6 @@
     const playerNameInput1 = document.getElementById('playerName1');
     const playerNameInput2 = document.getElementById('playerName2');
 
-    // Namenssynch zwischen den Spielen
     playerNameInput1.addEventListener('input', () => { playerNameInput2.value = playerNameInput1.value; });
     playerNameInput2.addEventListener('input', () => { playerNameInput1.value = playerNameInput2.value; });
 
@@ -608,6 +816,7 @@
     renderLeaderboard1();
     renderLeaderboard2();
 
+
     // ==========================================
     // MENÜWECHSEL
     // ==========================================
@@ -643,6 +852,7 @@
       mainSubtitle.textContent = 'Wähle dein Spiel aus';
       stopMeteorGame();
     });
+
 
     // ==========================================
     // SPIEL 1: BLITZ-REAKTION LOGIK
@@ -743,8 +953,9 @@
       startReactionGame();
     });
 
+
     // ==========================================
-    // SPIEL 2: METEOR-ABWEHR LOGIK
+    // SPIEL 2: METEOR-ABWEHR LOGIK (Mit Halte-Funktion)
     // ==========================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -781,6 +992,11 @@
     let meteorGameRunning = false;
     let animationFrameId = null;
 
+    // Halte-Steuerung für flüssiges Bewegen beim Gedrückthalten
+    let moveLeftPressed = false;
+    let moveRightPressed = false;
+    let moveHoldTimer = 0;
+
     function initStars() {
       stars = [];
       for (let i = 0; i < 30; i++) {
@@ -815,6 +1031,8 @@
       moveTimer = 0;
       reloadTimer = 0;
       meteorGameRunning = true;
+      moveLeftPressed = false;
+      moveRightPressed = false;
       initStars();
       renderLeaderboard2();
       updateHUD();
@@ -898,6 +1116,16 @@
       lastTime = timestamp;
 
       if (!gameOver) {
+        // Kontinuierliche Bewegung beim Halten der Knöpfe (ca. alle 120ms ein Schritt)
+        if (moveLeftPressed || moveRightPressed) {
+          moveHoldTimer += dt * 1000;
+          if (moveHoldTimer > 120) {
+            moveHoldTimer = 0;
+            if (moveLeftPressed && playerX > 0) playerX--;
+            if (moveRightPressed && playerX < GRID_SIZE - 1) playerX++;
+          }
+        }
+
         if (ammo < MAX_AMMO) {
           reloadTimer += dt * 1000;
           if (reloadTimer >= RELOAD_INTERVAL) {
@@ -1029,12 +1257,22 @@
       }
     }
 
-    document.getElementById('btnLeft').addEventListener('click', () => {
-      if (playerX > 0 && !gameOver) playerX--;
-    });
-    document.getElementById('btnRight').addEventListener('click', () => {
-      if (playerX < GRID_SIZE - 1 && !gameOver) playerX++;
-    });
+    // Touch- & Maus-Event-Listener zum Halten der Buttons
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+
+    btnLeft.addEventListener('mousedown', () => { moveLeftPressed = true; if (playerX > 0 && !gameOver) playerX--; });
+    btnLeft.addEventListener('mouseup', () => { moveLeftPressed = false; });
+    btnLeft.addEventListener('mouseleave', () => { moveLeftPressed = false; });
+    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); moveLeftPressed = true; if (playerX > 0 && !gameOver) playerX--; });
+    btnLeft.addEventListener('touchend', () => { moveLeftPressed = false; });
+
+    btnRight.addEventListener('mousedown', () => { moveRightPressed = true; if (playerX < GRID_SIZE - 1 && !gameOver) playerX++; });
+    btnRight.addEventListener('mouseup', () => { moveRightPressed = false; });
+    btnRight.addEventListener('mouseleave', () => { moveRightPressed = false; });
+    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); moveRightPressed = true; if (playerX < GRID_SIZE - 1 && !gameOver) playerX++; });
+    btnRight.addEventListener('touchend', () => { moveRightPressed = false; });
+
     document.getElementById('btnFire').addEventListener('click', fireWeapon);
     document.getElementById('btnRestart').addEventListener('click', initMeteorGame);
 
@@ -1045,14 +1283,19 @@
         if (e.code === 'KeyB') handleReactionInput('B');
       }
       if (!game2Container.classList.contains('hidden')) {
-        if (document.activeElement === playerNameInput2) return;
-        if (e.key === 'ArrowLeft' && playerX > 0 && !gameOver) playerX--;
-        if (e.key === 'ArrowRight' && playerX < GRID_SIZE - 1 && !gameOver) playerX++;
+        if (document.activeElement === playerNameInput2 || document.activeElement === document.getElementById('feedbackText')) return;
+        if (e.key === 'ArrowLeft') moveLeftPressed = true;
+        if (e.key === 'ArrowRight') moveRightPressed = true;
         if (e.code === 'Space') {
           e.preventDefault();
           fireWeapon();
         }
       }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') moveLeftPressed = false;
+      if (e.key === 'ArrowRight') moveRightPressed = false;
     });
   </script>
 </body>

@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synthwave Arcade Hub – Calliope & Meteor</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --bg-main: #0b061a;
+      --bg-panel: #171033;
+      --bg-card: #221747;
+      --border-neon: #ec4899;
+      --border-cyan: #06b6d4;
+      --accent-pink: #ec4899;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #2e1065 0%, var(--bg-main) 80%);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(23, 16, 51, 0.85);
+      backdrop-filter: blur(12px);
+      border: 2px solid var(--border-neon);
+      box-shadow: 0 0 35px rgba(236, 72, 153, 0.25), inset 0 0 25px rgba(0, 0, 0, 0.6);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ec4899, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* Hauptmenü */
+    .menu-screen {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 15px;
+    }
+
+    .game-select-btn {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(6, 182, 212, 0.2));
+      color: var(--text-main);
+      border: 2px solid var(--accent-cyan);
+      border-radius: 10px;
+      padding: 18px;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+    }
+
+    .game-select-btn:hover {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(6, 182, 212, 0.4));
+      border-color: var(--accent-pink);
+      box-shadow: 0 0 25px rgba(236, 72, 153, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .game-select-btn small {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 400;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .back-menu-btn {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border-neon);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 16px;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .back-menu-btn:hover {
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* HUD */
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .hud-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .hud-box span {
+      color: var(--accent-cyan);
+    }
+
+    .ammo-bar-wrap {
+      width: 100px;
+      height: 6px;
+      background: #0b061a;
+      border-radius: 3px;
+      margin: 6px auto 0;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .ammo-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: var(--accent-green);
+      transition: width 0.15s linear;
+    }
+
+    /* Waffenwahl */
+    .weapon-select {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .weapon-btn {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 8px 4px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .weapon-btn small {
+      display: block;
+      font-size: 0.65rem;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .weapon-btn.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+    }
+
+    /* Canvas */
+    .canvas-frame {
+      position: relative;
+      display: inline-block;
+      border: 2px solid var(--accent-cyan);
+      border-radius: 10px;
+      background: #05030a;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    /* Buttons */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .synth-btn {
+      background: linear-gradient(180deg, #4c1d95 0%, #2e1065 100%);
+      color: var(--text-main);
+      border: 2px solid var(--accent-cyan);
+      border-radius: 10px;
+      box-shadow: 0 4px 0 #1e0b36, 0 0 10px rgba(6, 182, 212, 0.3);
+      padding: 12px 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
+    }
+
+    .synth-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #1e0b36;
+    }
+
+    .synth-btn.fire-btn {
+      border-color: var(--accent-pink);
+      box-shadow: 0 4px 0 #4a0d2b, 0 0 12px rgba(236, 72, 153, 0.4);
+    }
+
+    .restart-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #ec4899, #8b5cf6);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 0 #581c87, 0 0 15px rgba(236, 72, 153, 0.4);
+      padding: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: transform 0.08s;
+    }
+
+    .restart-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #581c87;
+    }
+
+    .status-msg {
+      min-height: 24px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--accent-pink);
+      font-size: 0.95rem;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* Rangliste & Speicher-Box */
+    .leaderboard-section {
+      background: var(--bg-card);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: left;
+    }
+
+    .save-score-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      background: rgba(11, 6, 26, 0.5);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed rgba(255,255,255,0.15);
+    }
+
+    .save-score-box input {
+      flex: 1;
+      background: #0b061a;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .save-score-box input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .save-score-box button {
+      background: var(--accent-cyan);
+      color: #0b061a;
+      border: none;
+      border-radius: 6px;
+      padding: 0 14px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .save-score-box button:hover {
+      background: #22d3ee;
+    }
+
+    .leaderboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .leaderboard-title {
+      font-size: 0.85rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .clear-lb-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .clear-lb-btn:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0.85rem;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .leaderboard-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    .leaderboard-list li:first-child {
+      color: #34d399;
+      font-weight: bold;
+    }
+
+    .leaderboard-list li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <h1>Synth Arcade</h1>
+    <p class="subtitle" id="mainSubtitle">Wähle dein Spiel aus</p>
+
+    <!-- HAUPTMENÜ -->
+    <div id="mainMenu" class="menu-screen">
+      <button class="game-select-btn" id="btnLaunchGame1">
+        ⚡ Spiel 1: Blitz-Reaktion
+        <small>Teste deine Reflexe mit den Knöpfen</small>
+      </button>
+      <button class="game-select-btn" id="btnLaunchGame2">
+        🚀 Spiel 2: Meteor-Abwehr
+        <small>Shooter & Strategie im Weltall</small>
+      </button>
+    </div>
+
+    <!-- SPIEL 1: BLITZ-REAKTION -->
+    <div id="game1Container" class="hidden">
+      <button class="back-menu-btn" id="btnBackToMenu1">← Zurück zur Auswahl</button>
+      
+      <div class="hud">
+        <div class="hud-box">Letzte Zeit: <span id="reactDisplay">-</span> ms</div>
+        <div class="hud-box">Beste Zeit: <span id="bestReactDisplay">-</span> ms</div>
+      </div>
+
+      <div class="canvas-frame">
+        <canvas id="game1Canvas" width="360" height="200"></canvas>
+      </div>
+
+      <div class="status-msg" id="reactStatusMsg">Warte auf Signal...</div>
+
+      <div class="controls" style="grid-template-columns: 1fr 1fr;">
+        <button class="synth-btn fire-btn" id="btnReactA">A [Blau]</button>
+        <button class="synth-btn" id="btnReactB" style="border-color: #c084fc;">B [Lila]</button>
+      </div>
+
+      <button class="restart-btn" id="btnReactRestart">Nächste Runde</button>
+
+      <!-- RANGLISTE SPIEL 1 -->
+      <div class="leaderboard-section">
+        <div class="save-score-box" id="saveBox1">
+          <input type="text" id="playerName1" value="" maxlength="16" placeholder="Dein Name..." />
+          <button id="btnSaveScore1">Speichern</button>
+        </div>
+        <div class="leaderboard-header">
+          <div class="leaderboard-title">Top 5 Schnellste Runs (ms)</div>
+          <button class="clear-lb-btn" id="clearLb1">Reset</button>
+        </div>
+        <ul class="leaderboard-list" id="leaderboardList1"></ul>
+      </div>
+    </div>
+
+    <!-- SPIEL 2: METEOR-ABWEHR -->
+    <div id="game2Container" class="hidden">
+      <button class="back-menu-btn" id="btnBackToMenu2">← Zurück zur Auswahl</button>
+
+      <div class="hud">
+        <div class="hud-box">Punkte: <span id="scoreDisplay">0</span></div>
+        <div class="hud-box">
+          Munition: <span id="ammoDisplay">6 / 6</span>
+          <div class="ammo-bar-wrap">
+            <div class="ammo-bar-fill" id="ammoBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="weapon-select">
+        <button class="weapon-btn active" data-weapon="single">
+          Einzel
+          <small>1 Mun. | 1 DMG</small>
+        </button>
+        <button class="weapon-btn" data-weapon="double">
+          Doppel
+          <small>2 Mun. | 2x1 DMG</small>
+        </button>
+        <button class="weapon-btn" data-weapon="laser">
+          Laser
+          <small>3 Mun. | Strahl</small>
+        </button>
+      </div>
+
+      <div class="canvas-frame">
+        <canvas id="gameCanvas" width="360" height="340"></canvas>
+      </div>
+
+      <div class="status-msg" id="statusMsg"></div>
+
+      <div class="controls">
+        <button class="synth-btn" id="btnLeft">← Links</button>
+        <button class="synth-btn fire-btn" id="btnFire">Feuer [␣]</button>
+        <button class="synth-btn" id="btnRight">Rechts →</button>
+      </div>
+
+      <button class="restart-btn" id="btnRestart">Nochmal spielen</button>
+
+      <!-- RANGLISTE SPIEL 2 -->
+      <div class="leaderboard-section">
+        <div class="save-score-box" id="saveBox2">
+          <input type="text" id="playerName2" value="" maxlength="16" placeholder="Dein Name..." />
+          <button id="btnSaveScore2">Speichern</button>
+        </div>
+        <div class="leaderboard-header">
+          <div class="leaderboard-title">Top 5 Piloten (Punkte)</div>
+          <button class="clear-lb-btn" id="clearLb2">Reset</button>
+        </div>
+        <ul class="leaderboard-list" id="leaderboardList2"></ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // RANGLISTEN-SYSTEM & MANUELLES SPEICHERN
+    // ==========================================
+    const STORAGE_KEY_1 = 'synth_arcade_reaction';
+    const STORAGE_KEY_2 = 'synth_arcade_meteor';
+
+    let topRuns1 = JSON.parse(localStorage.getItem(STORAGE_KEY_1)) || [];
+    let topRuns2 = JSON.parse(localStorage.getItem(STORAGE_KEY_2)) || [];
+
+    const playerNameInput1 = document.getElementById('playerName1');
+    const playerNameInput2 = document.getElementById('playerName2');
+
+    // Namenssynch zwischen den Spielen
+    playerNameInput1.addEventListener('input', () => { playerNameInput2.value = playerNameInput1.value; });
+    playerNameInput2.addEventListener('input', () => { playerNameInput1.value = playerNameInput2.value; });
+
+    let lastReactionTime = null;
+    let lastMeteorScore = null;
+
+    document.getElementById('btnSaveScore1').addEventListener('click', () => {
+      if (!lastReactionTime) {
+        alert('Keine gültige Reaktionszeit vorhanden!');
+        return;
+      }
+      const name = playerNameInput1.value.trim() || 'Anonym';
+      topRuns1.push({ name, score: lastReactionTime });
+      topRuns1.sort((a, b) => a.score - b.score);
+      topRuns1 = topRuns1.slice(0, 5);
+      localStorage.setItem(STORAGE_KEY_1, JSON.stringify(topRuns1));
+      renderLeaderboard1();
+      lastReactionTime = null;
+      alert('Zeit in Bestenliste gespeichert!');
+    });
+
+    document.getElementById('btnSaveScore2').addEventListener('click', () => {
+      if (lastMeteorScore === null || lastMeteorScore <= 0) {
+        alert('Kein gültiger Score zum Speichern!');
+        return;
+      }
+      const name = playerNameInput2.value.trim() || 'Pilot';
+      topRuns2.push({ name, score: lastMeteorScore });
+      topRuns2.sort((a, b) => b.score - a.score);
+      topRuns2 = topRuns2.slice(0, 5);
+      localStorage.setItem(STORAGE_KEY_2, JSON.stringify(topRuns2));
+      renderLeaderboard2();
+      lastMeteorScore = null;
+      alert('Score in Bestenliste gespeichert!');
+    });
+
+    function renderLeaderboard1() {
+      const list = document.getElementById('leaderboardList1');
+      list.innerHTML = '';
+      if (topRuns1.length === 0) {
+        list.innerHTML = '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>';
+        document.getElementById('bestReactDisplay').textContent = '-';
+        return;
+      }
+      document.getElementById('bestReactDisplay').textContent = topRuns1[0].score;
+      topRuns1.forEach((entry, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>#${index + 1} ${escapeHtml(entry.name)}</span><span>${entry.score} ms</span>`;
+        list.appendChild(li);
+      });
+    }
+
+    function renderLeaderboard2() {
+      const list = document.getElementById('leaderboardList2');
+      list.innerHTML = '';
+      if (topRuns2.length === 0) {
+        list.innerHTML = '<li><span style="color: var(--text-muted)">Noch keine Einträge</span></li>';
+        return;
+      }
+      topRuns2.forEach((entry, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>#${index + 1} ${escapeHtml(entry.name)}</span><span>${entry.score} Pkt</span>`;
+        list.appendChild(li);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('clearLb1').addEventListener('click', () => {
+      topRuns1 = [];
+      localStorage.removeItem(STORAGE_KEY_1);
+      renderLeaderboard1();
+    });
+
+    document.getElementById('clearLb2').addEventListener('click', () => {
+      topRuns2 = [];
+      localStorage.removeItem(STORAGE_KEY_2);
+      renderLeaderboard2();
+    });
+
+    renderLeaderboard1();
+    renderLeaderboard2();
+
+    // ==========================================
+    // MENÜWECHSEL
+    // ==========================================
+    const mainMenu = document.getElementById('mainMenu');
+    const mainSubtitle = document.getElementById('mainSubtitle');
+    const game1Container = document.getElementById('game1Container');
+    const game2Container = document.getElementById('game2Container');
+
+    document.getElementById('btnLaunchGame1').addEventListener('click', () => {
+      mainMenu.classList.add('hidden');
+      game1Container.classList.remove('hidden');
+      mainSubtitle.textContent = 'Reagiere blitzschnell auf Knöpfe!';
+      startReactionGame();
+    });
+
+    document.getElementById('btnLaunchGame2').addEventListener('click', () => {
+      mainMenu.classList.add('hidden');
+      game2Container.classList.remove('hidden');
+      mainSubtitle.textContent = 'Steuerung: ← → Bewegen | Leertaste Feuern';
+      initMeteorGame();
+    });
+
+    document.getElementById('btnBackToMenu1').addEventListener('click', () => {
+      game1Container.classList.add('hidden');
+      mainMenu.classList.remove('hidden');
+      mainSubtitle.textContent = 'Wähle dein Spiel aus';
+      stopReactionGame();
+    });
+
+    document.getElementById('btnBackToMenu2').addEventListener('click', () => {
+      game2Container.classList.add('hidden');
+      mainMenu.classList.remove('hidden');
+      mainSubtitle.textContent = 'Wähle dein Spiel aus';
+      stopMeteorGame();
+    });
+
+    // ==========================================
+    // SPIEL 1: BLITZ-REAKTION LOGIK
+    // ==========================================
+    const g1Canvas = document.getElementById('game1Canvas');
+    const g1Ctx = g1Canvas.getContext('2d');
+    const reactDisplay = document.getElementById('reactDisplay');
+    const reactStatusMsg = document.getElementById('reactStatusMsg');
+
+    let g1State = 'wait';
+    let g1StartTime = 0;
+    let g1TimerId = null;
+    let g1RequiredKey = 'A';
+
+    function startReactionGame() {
+      g1State = 'wait';
+      reactDisplay.textContent = '-';
+      renderLeaderboard1();
+      runReactionRound();
+    }
+
+    function stopReactionGame() {
+      clearTimeout(g1TimerId);
+    }
+
+    function runReactionRound() {
+      clearTimeout(g1TimerId);
+      g1State = 'wait';
+      reactStatusMsg.textContent = 'Warte auf Signal...';
+      reactStatusMsg.style.color = 'var(--accent-pink)';
+      drawReactionScreen('BEREIT...', '#171033');
+
+      const randomDelay = 1200 + Math.random() * 2500;
+      g1TimerId = setTimeout(() => {
+        g1State = 'active';
+        g1RequiredKey = Math.random() > 0.5 ? 'A' : 'B';
+        g1StartTime = performance.now();
+        
+        if (g1RequiredKey === 'A') {
+          reactStatusMsg.textContent = 'JETZT KNOPF A (BLAU)!';
+          reactStatusMsg.style.color = 'var(--accent-cyan)';
+          drawReactionScreen('KNOPF A!', '#1e1b4b');
+        } else {
+          reactStatusMsg.textContent = 'JETZT KNOPF B (LILA)!';
+          reactStatusMsg.style.color = '#c084fc';
+          drawReactionScreen('KNOPF B!', '#3b0764');
+        }
+      }, randomDelay);
+    }
+
+    function handleReactionInput(key) {
+      if (game1Container.classList.contains('hidden')) return;
+      if (document.activeElement === playerNameInput1) return;
+
+      if (g1State === 'wait') {
+        clearTimeout(g1TimerId);
+        g1State = 'falseStart';
+        reactStatusMsg.textContent = 'ZU FRÜH! Falschstart';
+        reactStatusMsg.style.color = '#ef4444';
+        drawReactionScreen('ZU FRÜH!', '#450a0a');
+        g1TimerId = setTimeout(runReactionRound, 1500);
+      } else if (g1State === 'active') {
+        if (key === g1RequiredKey) {
+          const reactionTime = Math.round(performance.now() - g1StartTime);
+          g1State = 'result';
+          reactDisplay.textContent = reactionTime;
+          lastReactionTime = reactionTime;
+
+          reactStatusMsg.textContent = `Treffer! ${reactionTime} ms (Jetzt speichern?)`;
+          reactStatusMsg.style.color = 'var(--accent-green)';
+          drawReactionScreen(`${reactionTime} ms`, '#022c22');
+          g1TimerId = setTimeout(runReactionRound, 2500);
+        } else {
+          g1State = 'falseStart';
+          reactStatusMsg.textContent = 'Falscher Knopf!';
+          reactStatusMsg.style.color = '#ef4444';
+          drawReactionScreen('FALSCH', '#450a0a');
+          g1TimerId = setTimeout(runReactionRound, 1500);
+        }
+      }
+    }
+
+    function drawReactionScreen(text, bgColor) {
+      g1Ctx.fillStyle = bgColor;
+      g1Ctx.fillRect(0, 0, g1Canvas.width, g1Canvas.height);
+      
+      g1Ctx.fillStyle = '#f8fafc';
+      g1Ctx.font = 'bold 24px Outfit, sans-serif';
+      g1Ctx.textAlign = 'center';
+      g1Ctx.textBaseline = 'middle';
+      g1Ctx.fillText(text, g1Canvas.width / 2, g1Canvas.height / 2);
+    }
+
+    document.getElementById('btnReactA').addEventListener('click', () => handleReactionInput('A'));
+    document.getElementById('btnReactB').addEventListener('click', () => handleReactionInput('B'));
+    document.getElementById('btnReactRestart').addEventListener('click', () => {
+      clearTimeout(g1TimerId);
+      startReactionGame();
+    });
+
+    // ==========================================
+    // SPIEL 2: METEOR-ABWEHR LOGIK
+    // ==========================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const GRID_SIZE = 12;
+    const CELL_SIZE = canvas.width / GRID_SIZE;
+
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const ammoDisplay = document.getElementById('ammoDisplay');
+    const ammoBar = document.getElementById('ammoBar');
+    const statusMsg = document.getElementById('statusMsg');
+    const weaponBtns = document.querySelectorAll('.weapon-btn');
+
+    let score = 0;
+    let gameOver = false;
+    let playerX = 5;
+    const playerY = GRID_SIZE - 1;
+
+    const MAX_AMMO = 6;
+    let ammo = MAX_AMMO;
+    let reloadTimer = 0;
+    const RELOAD_INTERVAL = 1100;
+
+    let currentWeapon = 'single';
+    let bullets = [];
+    let lasers = [];
+    let meteors = [];
+    let particles = [];
+    let stars = [];
+
+    let lastTime = 0;
+    let spawnTimer = 0;
+    let moveTimer = 0;
+    let meteorGameRunning = false;
+    let animationFrameId = null;
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 30; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() > 0.7 ? 2.5 : 1.5,
+          speed: 15 + Math.random() * 30,
+          alpha: 0.3 + Math.random() * 0.7
+        });
+      }
+    }
+
+    weaponBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        weaponBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentWeapon = btn.getAttribute('data-weapon');
+      });
+    });
+
+    function initMeteorGame() {
+      score = 0;
+      gameOver = false;
+      playerX = 5;
+      ammo = MAX_AMMO;
+      bullets = [];
+      lasers = [];
+      meteors = [];
+      particles = [];
+      spawnTimer = 0;
+      moveTimer = 0;
+      reloadTimer = 0;
+      meteorGameRunning = true;
+      initStars();
+      renderLeaderboard2();
+      updateHUD();
+      statusMsg.textContent = 'Bereit zur Abwehr!';
+      statusMsg.style.color = 'var(--accent-cyan)';
+      lastTime = performance.now();
+      
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(meteorGameLoop);
+    }
+
+    function stopMeteorGame() {
+      meteorGameRunning = false;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    }
+
+    function fireWeapon() {
+      if (gameOver || !meteorGameRunning) return;
+
+      let cost = 1;
+      if (currentWeapon === 'double') cost = 2;
+      if (currentWeapon === 'laser') cost = 3;
+
+      if (ammo < cost) {
+        statusMsg.textContent = 'Nicht genug Munition!';
+        return;
+      }
+
+      ammo -= cost;
+      updateHUD();
+
+      if (currentWeapon === 'single') {
+        bullets.push({ x: playerX, y: playerY - 1, damage: 1 });
+      } else if (currentWeapon === 'double') {
+        if (playerX > 0) bullets.push({ x: playerX - 0.3, y: playerY - 1, damage: 1 });
+        if (playerX < GRID_SIZE - 1) bullets.push({ x: playerX + 0.3, y: playerY - 1, damage: 1 });
+      } else if (currentWeapon === 'laser') {
+        lasers.push({ x: playerX, duration: 180 });
+        for (let i = meteors.length - 1; i >= 0; i--) {
+          if (Math.abs(meteors[i].x - playerX) < 0.8) {
+            createExplosion(meteors[i].x, meteors[i].y, '#06b6d4');
+            score += meteors[i].hp * 10;
+            meteors.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    function spawnMeteor() {
+      const x = Math.floor(Math.random() * GRID_SIZE);
+      const typeRand = Math.random();
+      let hp = 1;
+      let size = 1;
+      if (typeRand > 0.75) { hp = 2; size = 1.2; }
+      meteors.push({ x: x, y: 0, hp: hp, maxHp: hp, size: size });
+    }
+
+    function createExplosion(x, y, color) {
+      for (let i = 0; i < 8; i++) {
+        particles.push({
+          x: x * CELL_SIZE + CELL_SIZE / 2,
+          y: y * CELL_SIZE + CELL_SIZE / 2,
+          vx: (Math.random() - 0.5) * 90,
+          vy: (Math.random() - 0.5) * 90,
+          color: color,
+          life: 0.4
+        });
+      }
+    }
+
+    function updateHUD() {
+      scoreDisplay.textContent = score;
+      ammoDisplay.textContent = `${ammo} / ${MAX_AMMO}`;
+      ammoBar.style.width = `${(ammo / MAX_AMMO) * 100}%`;
+    }
+
+    function meteorGameLoop(timestamp) {
+      if (!meteorGameRunning) return;
+
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      if (!gameOver) {
+        if (ammo < MAX_AMMO) {
+          reloadTimer += dt * 1000;
+          if (reloadTimer >= RELOAD_INTERVAL) {
+            ammo++;
+            reloadTimer = 0;
+            updateHUD();
+          }
+        }
+
+        spawnTimer += dt * 1000;
+        if (spawnTimer > 1300) {
+          spawnMeteor();
+          spawnTimer = 0;
+        }
+
+        moveTimer += dt * 1000;
+        if (moveTimer > 450) {
+          moveTimer = 0;
+          for (let m of meteors) {
+            m.y += 1;
+            if (m.y >= playerY) {
+              gameOver = true;
+              statusMsg.textContent = 'GAME OVER – Jetzt Score speichern!';
+              statusMsg.style.color = '#ef4444';
+              lastMeteorScore = score;
+              break;
+            }
+          }
+        }
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          bullets[i].y -= dt * 12;
+          if (bullets[i].y < 0) {
+            bullets.splice(i, 1);
+            continue;
+          }
+          for (let j = meteors.length - 1; j >= 0; j--) {
+            let m = meteors[j];
+            if (Math.abs(bullets[i].x - m.x) < 0.6 && Math.abs(bullets[i].y - m.y) < 0.6) {
+              m.hp -= bullets[i].damage;
+              createExplosion(m.x, m.y, '#ec4899');
+              bullets.splice(i, 1);
+              if (m.hp <= 0) {
+                score += m.maxHp * 15;
+                meteors.splice(j, 1);
+              }
+              break;
+            }
+          }
+        }
+
+        for (let i = lasers.length - 1; i >= 0; i--) {
+          lasers[i].duration -= dt * 1000;
+          if (lasers[i].duration <= 0) lasers.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      updateHUD();
+      drawMeteorGame(dt);
+      animationFrameId = requestAnimationFrame(meteorGameLoop);
+    }
+
+    function drawMeteorGame(dt) {
+      ctx.fillStyle = '#05030a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let s of stars) {
+        s.y += s.speed * dt;
+        if (s.y > canvas.height) s.y = 0;
+        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+      }
+
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.1)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= GRID_SIZE; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * CELL_SIZE, 0);
+        ctx.lineTo(i * CELL_SIZE, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, i * CELL_SIZE);
+        ctx.lineTo(canvas.width, i * CELL_SIZE);
+        ctx.stroke();
+      }
+
+      for (let l of lasers) {
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
+        ctx.fillRect(l.x * CELL_SIZE, 0, CELL_SIZE, canvas.height);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillRect(l.x * CELL_SIZE + CELL_SIZE / 3, 0, CELL_SIZE / 3, canvas.height);
+      }
+
+      ctx.fillStyle = '#06b6d4';
+      let px = playerX * CELL_SIZE;
+      let py = playerY * CELL_SIZE;
+      ctx.fillRect(px + 4, py + 8, CELL_SIZE - 8, CELL_SIZE - 8);
+      ctx.fillRect(px + CELL_SIZE / 2 - 3, py + 2, 6, 8);
+
+      ctx.fillStyle = '#10b981';
+      for (let b of bullets) {
+        ctx.fillRect(b.x * CELL_SIZE + CELL_SIZE / 2 - 2, b.y * CELL_SIZE, 4, 10);
+      }
+
+      for (let m of meteors) {
+        ctx.fillStyle = m.maxHp > 1 ? '#ec4899' : '#f97316';
+        let mx = m.x * CELL_SIZE;
+        let my = m.y * CELL_SIZE;
+        ctx.fillRect(mx + 4, my + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+        if (m.maxHp > 1) {
+          ctx.fillStyle = '#fff';
+          ctx.font = '10px monospace';
+          ctx.fillText(m.hp, mx + CELL_SIZE / 2 - 3, my + CELL_SIZE / 2 + 4);
+        }
+      }
+
+      for (let p of particles) {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 3, 3);
+      }
+    }
+
+    document.getElementById('btnLeft').addEventListener('click', () => {
+      if (playerX > 0 && !gameOver) playerX--;
+    });
+    document.getElementById('btnRight').addEventListener('click', () => {
+      if (playerX < GRID_SIZE - 1 && !gameOver) playerX++;
+    });
+    document.getElementById('btnFire').addEventListener('click', fireWeapon);
+    document.getElementById('btnRestart').addEventListener('click', initMeteorGame);
+
+    window.addEventListener('keydown', (e) => {
+      if (!game1Container.classList.contains('hidden')) {
+        if (document.activeElement === playerNameInput1) return;
+        if (e.code === 'KeyA') handleReactionInput('A');
+        if (e.code === 'KeyB') handleReactionInput('B');
+      }
+      if (!game2Container.classList.contains('hidden')) {
+        if (document.activeElement === playerNameInput2) return;
+        if (e.key === 'ArrowLeft' && playerX > 0 && !gameOver) playerX--;
+        if (e.key === 'ArrowRight' && playerX < GRID_SIZE - 1 && !gameOver) playerX++;
+        if (e.code === 'Space') {
+          e.preventDefault();
+          fireWeapon();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

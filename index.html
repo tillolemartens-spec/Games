@@ -485,22 +485,6 @@
       font-family: 'Share Tech Mono', monospace;
     }
 
-    .clear-lb-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.15);
-      color: var(--text-muted);
-      font-family: inherit;
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .clear-lb-btn:hover {
-      border-color: #ef4444;
-      color: #ef4444;
-    }
-
     .leaderboard-list {
       list-style: none;
       margin: 0;
@@ -573,14 +557,14 @@
         <canvas id="game1Canvas" width="360" height="200"></canvas>
       </div>
 
-      <div class="status-msg" id="reactStatusMsg">Warte auf Signal...</div>
+      <div class="status-msg" id="reactStatusMsg">Bereit zum Start</div>
 
       <div class="controls" style="grid-template-columns: 1fr 1fr;">
         <button class="synth-btn fire-btn" id="btnReactA">A [Blau]</button>
         <button class="synth-btn" id="btnReactB" style="border-color: #c084fc;">B [Lila]</button>
       </div>
 
-      <button class="restart-btn" id="btnReactRestart">Nächste Runde</button>
+      <button class="restart-btn" id="btnReactRestart">Spiel starten</button>
 
       <!-- RANGLISTE SPIEL 1 -->
       <div class="leaderboard-section">
@@ -590,7 +574,6 @@
         </div>
         <div class="leaderboard-header">
           <div class="leaderboard-title">Top 5 Schnellste Runs (ms)</div>
-          <button class="clear-lb-btn" id="clearLb1">Reset</button>
         </div>
         <ul class="leaderboard-list" id="leaderboardList1"></ul>
       </div>
@@ -629,7 +612,7 @@
         <canvas id="gameCanvas" width="360" height="340"></canvas>
       </div>
 
-      <div class="status-msg" id="statusMsg"></div>
+      <div class="status-msg" id="statusMsg">Klicke auf Start, um zu beginnen!</div>
 
       <div class="controls">
         <button class="synth-btn" id="btnLeft">← Links</button>
@@ -637,7 +620,7 @@
         <button class="synth-btn" id="btnRight">Rechts →</button>
       </div>
 
-      <button class="restart-btn" id="btnRestart">Nochmal spielen</button>
+      <button class="restart-btn" id="btnRestart">Spiel starten</button>
 
       <!-- RANGLISTE SPIEL 2 -->
       <div class="leaderboard-section">
@@ -647,7 +630,6 @@
         </div>
         <div class="leaderboard-header">
           <div class="leaderboard-title">Top 5 Piloten (Punkte)</div>
-          <button class="clear-lb-btn" id="clearLb2">Reset</button>
         </div>
         <ul class="leaderboard-list" id="leaderboardList2"></ul>
       </div>
@@ -801,18 +783,6 @@
       return div.innerHTML;
     }
 
-    document.getElementById('clearLb1').addEventListener('click', () => {
-      topRuns1 = [];
-      localStorage.removeItem(STORAGE_KEY_1);
-      renderLeaderboard1();
-    });
-
-    document.getElementById('clearLb2').addEventListener('click', () => {
-      topRuns2 = [];
-      localStorage.removeItem(STORAGE_KEY_2);
-      renderLeaderboard2();
-    });
-
     renderLeaderboard1();
     renderLeaderboard2();
 
@@ -828,15 +798,15 @@
     document.getElementById('btnLaunchGame1').addEventListener('click', () => {
       mainMenu.classList.add('hidden');
       game1Container.classList.remove('hidden');
-      mainSubtitle.textContent = 'Reagiere blitzschnell auf Knöpfe!';
-      startReactionGame();
+      mainSubtitle.textContent = 'Klicke auf Start, um loszulegen!';
+      prepareReactionGame();
     });
 
     document.getElementById('btnLaunchGame2').addEventListener('click', () => {
       mainMenu.classList.add('hidden');
       game2Container.classList.remove('hidden');
       mainSubtitle.textContent = 'Steuerung: ← → Bewegen | Leertaste Feuern';
-      initMeteorGame();
+      prepareMeteorGame();
     });
 
     document.getElementById('btnBackToMenu1').addEventListener('click', () => {
@@ -855,27 +825,37 @@
 
 
     // ==========================================
-    // SPIEL 1: BLITZ-REAKTION LOGIK
+    // SPIEL 1: BLITZ-REAKTION LOGIK (Manueller Start)
     // ==========================================
     const g1Canvas = document.getElementById('game1Canvas');
     const g1Ctx = g1Canvas.getContext('2d');
     const reactDisplay = document.getElementById('reactDisplay');
     const reactStatusMsg = document.getElementById('reactStatusMsg');
 
-    let g1State = 'wait';
+    let g1State = 'idle'; // 'idle', 'wait', 'active', 'result', 'falseStart'
     let g1StartTime = 0;
     let g1TimerId = null;
     let g1RequiredKey = 'A';
 
-    function startReactionGame() {
-      g1State = 'wait';
+    function prepareReactionGame() {
+      g1State = 'idle';
+      clearTimeout(g1TimerId);
       reactDisplay.textContent = '-';
+      reactStatusMsg.textContent = 'Klicke auf "Spiel starten"';
+      reactStatusMsg.style.color = 'var(--accent-cyan)';
+      document.getElementById('btnReactRestart').textContent = 'Spiel starten';
       renderLeaderboard1();
+      drawReactionScreen('BEREIT?', '#171033');
+    }
+
+    function startReactionGame() {
+      document.getElementById('btnReactRestart').textContent = 'Neustart';
       runReactionRound();
     }
 
     function stopReactionGame() {
       clearTimeout(g1TimerId);
+      g1State = 'idle';
     }
 
     function runReactionRound() {
@@ -883,7 +863,7 @@
       g1State = 'wait';
       reactStatusMsg.textContent = 'Warte auf Signal...';
       reactStatusMsg.style.color = 'var(--accent-pink)';
-      drawReactionScreen('BEREIT...', '#171033');
+      drawReactionScreen('WARTEN...', '#171033');
 
       const randomDelay = 1200 + Math.random() * 2500;
       g1TimerId = setTimeout(() => {
@@ -904,7 +884,7 @@
     }
 
     function handleReactionInput(key) {
-      if (game1Container.classList.contains('hidden')) return;
+      if (game1Container.classList.contains('hidden') || g1State === 'idle') return;
       if (document.activeElement === playerNameInput1) return;
 
       if (g1State === 'wait') {
@@ -949,13 +929,17 @@
     document.getElementById('btnReactA').addEventListener('click', () => handleReactionInput('A'));
     document.getElementById('btnReactB').addEventListener('click', () => handleReactionInput('B'));
     document.getElementById('btnReactRestart').addEventListener('click', () => {
-      clearTimeout(g1TimerId);
-      startReactionGame();
+      if (g1State === 'idle') {
+        startReactionGame();
+      } else {
+        clearTimeout(g1TimerId);
+        startReactionGame();
+      }
     });
 
 
     // ==========================================
-    // SPIEL 2: METEOR-ABWEHR LOGIK (Mit Halte-Funktion)
+    // SPIEL 2: METEOR-ABWEHR LOGIK (Manueller Start)
     // ==========================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -971,6 +955,7 @@
 
     let score = 0;
     let gameOver = false;
+    let gameIdle = true;
     let playerX = 5;
     const playerY = GRID_SIZE - 1;
 
@@ -992,7 +977,6 @@
     let meteorGameRunning = false;
     let animationFrameId = null;
 
-    // Halte-Steuerung für flüssiges Bewegen beim Gedrückthalten
     let moveLeftPressed = false;
     let moveRightPressed = false;
     let moveHoldTimer = 0;
@@ -1018,9 +1002,32 @@
       });
     });
 
+    function prepareMeteorGame() {
+      meteorGameRunning = false;
+      gameIdle = true;
+      gameOver = false;
+      score = 0;
+      playerX = 5;
+      ammo = MAX_AMMO;
+      bullets = [];
+      lasers = [];
+      meteors = [];
+      particles = [];
+      initStars();
+      renderLeaderboard2();
+      updateHUD();
+      statusMsg.textContent = 'Klicke auf "Spiel starten"!';
+      statusMsg.style.color = 'var(--accent-cyan)';
+      document.getElementById('btnRestart').textContent = 'Spiel starten';
+      
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      drawIdleMeteorScreen();
+    }
+
     function initMeteorGame() {
       score = 0;
       gameOver = false;
+      gameIdle = false;
       playerX = 5;
       ammo = MAX_AMMO;
       bullets = [];
@@ -1033,6 +1040,7 @@
       meteorGameRunning = true;
       moveLeftPressed = false;
       moveRightPressed = false;
+      document.getElementById('btnRestart').textContent = 'Nochmal spielen';
       initStars();
       renderLeaderboard2();
       updateHUD();
@@ -1046,11 +1054,12 @@
 
     function stopMeteorGame() {
       meteorGameRunning = false;
+      gameIdle = true;
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     }
 
     function fireWeapon() {
-      if (gameOver || !meteorGameRunning) return;
+      if (gameIdle || gameOver || !meteorGameRunning) return;
 
       let cost = 1;
       if (currentWeapon === 'double') cost = 2;
@@ -1116,7 +1125,6 @@
       lastTime = timestamp;
 
       if (!gameOver) {
-        // Kontinuierliche Bewegung beim Halten der Knöpfe (ca. alle 120ms ein Schritt)
         if (moveLeftPressed || moveRightPressed) {
           moveHoldTimer += dt * 1000;
           if (moveHoldTimer > 120) {
@@ -1196,6 +1204,24 @@
       animationFrameId = requestAnimationFrame(meteorGameLoop);
     }
 
+    function drawIdleMeteorScreen() {
+      ctx.fillStyle = '#05030a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Schiff anzeigen
+      ctx.fillStyle = '#06b6d4';
+      let px = playerX * CELL_SIZE;
+      let py = playerY * CELL_SIZE;
+      ctx.fillRect(px + 4, py + 8, CELL_SIZE - 8, CELL_SIZE - 8);
+      ctx.fillRect(px + CELL_SIZE / 2 - 3, py + 2, 6, 8);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 20px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('BEREIT ZUM START', canvas.width / 2, canvas.height / 2);
+    }
+
     function drawMeteorGame(dt) {
       ctx.fillStyle = '#05030a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1257,20 +1283,19 @@
       }
     }
 
-    // Touch- & Maus-Event-Listener zum Halten der Buttons
     const btnLeft = document.getElementById('btnLeft');
     const btnRight = document.getElementById('btnRight');
 
-    btnLeft.addEventListener('mousedown', () => { moveLeftPressed = true; if (playerX > 0 && !gameOver) playerX--; });
+    btnLeft.addEventListener('mousedown', () => { moveLeftPressed = true; if (!gameIdle && playerX > 0 && !gameOver) playerX--; });
     btnLeft.addEventListener('mouseup', () => { moveLeftPressed = false; });
     btnLeft.addEventListener('mouseleave', () => { moveLeftPressed = false; });
-    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); moveLeftPressed = true; if (playerX > 0 && !gameOver) playerX--; });
+    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); moveLeftPressed = true; if (!gameIdle && playerX > 0 && !gameOver) playerX--; });
     btnLeft.addEventListener('touchend', () => { moveLeftPressed = false; });
 
-    btnRight.addEventListener('mousedown', () => { moveRightPressed = true; if (playerX < GRID_SIZE - 1 && !gameOver) playerX++; });
+    btnRight.addEventListener('mousedown', () => { moveRightPressed = true; if (!gameIdle && playerX < GRID_SIZE - 1 && !gameOver) playerX++; });
     btnRight.addEventListener('mouseup', () => { moveRightPressed = false; });
     btnRight.addEventListener('mouseleave', () => { moveRightPressed = false; });
-    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); moveRightPressed = true; if (playerX < GRID_SIZE - 1 && !gameOver) playerX++; });
+    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); moveRightPressed = true; if (!gameIdle && playerX < GRID_SIZE - 1 && !gameOver) playerX++; });
     btnRight.addEventListener('touchend', () => { moveRightPressed = false; });
 
     document.getElementById('btnFire').addEventListener('click', fireWeapon);

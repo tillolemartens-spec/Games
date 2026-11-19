@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Großer Autodieb 6</title>
+<style>
+  body {
+    margin: 0;
+    background-color: #000;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    cursor: none; /* Versteckt den normalen Mauszeiger */
+  }
+  canvas {
+    border: 2px solid #fff;
+    background-color: #111;
+  }
+  #ui {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    font-size: 20px;
+    pointer-events: none;
+    text-shadow: 2px 2px #000;
+  }
+  #title {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  PUNKTE: <span id="score">0</span><br>
+  FAHNDUNGSLEVEL: <span id="wanted">☆☆☆☆☆</span>
+</div>
+<div id="title">GROSSER AUTODIEB 6</div>
+<canvas id="gameCanvas" width="900" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const wantedEl = document.getElementById('wanted');
+
+let score = 0;
+let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+let targets = [];
+let muzzleFlash = 0;
+
+// Mausbewegung verfolgen
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = e.clientX - rect.left;
+  mouse.y = e.clientY - rect.top;
+});
+
+// Schießen bei Klick
+canvas.addEventListener('mousedown', () => {
+  muzzleFlash = 4; // Kurzes Aufblitzen beim Schuss
+  checkHit();
+});
+
+// Ziele (Autos & Menschen) erstellen
+function spawnTarget() {
+  const isCar = Math.random() > 0.45;
+  const fromLeft = Math.random() > 0.5;
+  const y = 120 + Math.random() * (canvas.height - 200);
+  
+  if (isCar) {
+    targets.push({
+      type: 'car',
+      x: fromLeft ? -100 : canvas.width + 100,
+      y: y,
+      width: 90,
+      height: 40,
+      speed: (fromLeft ? 1 : -1) * (2.5 + Math.random() * 3),
+      points: 100
+    });
+  } else {
+    targets.push({
+      type: 'person',
+      x: fromLeft ? -30 : canvas.width + 30,
+      y: y,
+      width: 20,
+      height: 45,
+      speed: (fromLeft ? 1 : -1) * (1 + Math.random() * 1.5),
+      points: 50
+    });
+  }
+}
+
+// Treffer überprüfen
+function checkHit() {
+  for (let i = targets.length - 1; i >= 0; i--) {
+    const t = targets[i];
+    if (
+      mouse.x >= t.x &&
+      mouse.x <= t.x + t.width &&
+      mouse.y >= t.y &&
+      mouse.y <= t.y + t.height
+    ) {
+      score += t.points;
+      scoreEl.innerText = score;
+      updateWantedLevel();
+      targets.splice(i, 1);
+      break; // Ein Schuss trifft maximal ein Ziel
+    }
+  }
+}
+
+// Fahndungssterne aktualisieren
+function updateWantedLevel() {
+  const stars = Math.min(5, Math.floor(score / 500));
+  wantedEl.innerText = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+}
+
+// Umrisse zeichnen
+function drawTargets() {
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+
+  targets.forEach(t => {
+    if (t.type === 'car') {
+      // Auto-Umriss
+      ctx.strokeRect(t.x, t.y + 15, t.width, 20); // Karosserie
+      ctx.beginPath();
+      ctx.moveTo(t.x + 15, t.y + 15);
+      ctx.lineTo(t.x + 25, t.y);
+      ctx.lineTo(t.x + 65, t.y);
+      ctx.lineTo(t.x + 75, t.y + 15);
+      ctx.stroke(); // Dach
+      // Räder
+      ctx.beginPath();
+      ctx.arc(t.x + 20, t.y + 35, 8, 0, Math.PI * 2);
+      ctx.arc(t.x + 70, t.y + 35, 8, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // Menschen-Umriss (Strichmännchen-Silhouette)
+      const cx = t.x + t.width / 2;
+      ctx.beginPath();
+      ctx.arc(cx, t.y + 8, 6, 0, Math.PI * 2); // Kopf
+      ctx.moveTo(cx, t.y + 14);
+      ctx.lineTo(cx, t.y + 30); // Körper
+      ctx.moveTo(cx - 8, t.y + 20);
+      ctx.lineTo(cx + 8, t.y + 20); // Arme
+      ctx.moveTo(cx, t.y + 30);
+      ctx.lineTo(cx - 6, t.y + 45); // Linkes Bein
+      ctx.moveTo(cx, t.y + 30);
+      ctx.lineTo(cx + 6, t.y + 45); // Rechtes Bein
+      ctx.stroke();
+    }
+  });
+}
+
+// Schwarz-weiße Zielvorrichtung (Fadenkreuz + Sniper-Maske)
+function drawScope() {
+  // Dunkler Rand außerhalb des Zielfernrohrs
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+  ctx.beginPath();
+  ctx.rect(0, 0, canvas.width, canvas.height);
+  ctx.arc(mouse.x, mouse.y, 110, 0, Math.PI * 2, true);
+  ctx.fill();
+
+  // Weißer Ring des Zielfernrohrs
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(mouse.x, mouse.y, 110, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Fadenkreuz-Linien
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mouse.x - 110, mouse.y);
+  ctx.lineTo(mouse.x + 110, mouse.y);
+  ctx.moveTo(mouse.x, mouse.y - 110);
+  ctx.lineTo(mouse.x, mouse.y + 110);
+  ctx.stroke();
+
+  // Kleiner Zielpunkt in der Mitte
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(mouse.x - 2, mouse.y - 2, 4, 4);
+  ctx.restore();
+}
+
+// Haupt-Spielschleife
+function gameLoop() {
+  // Hintergrund (leichtes Blitzen bei Schuss)
+  ctx.fillStyle = muzzleFlash > 0 ? '#333' : '#0a0a0a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (muzzleFlash > 0) muzzleFlash--;
+
+  // Straßenlinien im Hintergrund
+  ctx.strokeStyle = '#333';
+  ctx.setLineDash([20, 20]);
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height / 2);
+  ctx.lineTo(canvas.width, canvas.height / 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Neue Ziele spawnen
+  if (Math.random() < 0.03) {
+    spawnTarget();
+  }
+
+  // Ziele bewegen
+  for (let i = targets.length - 1; i >= 0; i--) {
+    targets[i].x += targets[i].speed;
+    if (targets[i].x < -150 || targets[i].x > canvas.width + 150) {
+      targets.splice(i, 1);
+    }
+  }
+
+  drawTargets();
+  drawScope();
+
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>

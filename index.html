@@ -3,103 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Synthwave Arcade Hub – Calliope, Meteor & CAPTCHA</title>
+  <title>Synthwave Arcade Hub – Calliope, Meteor &amp; CAPTCHA</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="game-container">
     <h1>Synthwave Arcade Hub</h1>
-    <p class="subtitle" id="subtitle">Wähle dein Spiel aus</p>
+    <p class="subtitle">Wähle dein Spiel aus</p>
 
-    <!-- HAUPTMENÜ -->
-    <div id="menuScreen" class="menu-screen">
-      <button class="menu-btn" id="btnLaunchGame1">
+    <div class="menu-list">
+      <a href="./blitz-reaktion/" class="menu-btn">
         <strong>01: Blitz-Reaktion</strong>
-        <span>Teste deine Reflexe mit zwei Knöpfen (A & B)</span>
-      </button>
-
-      <button class="menu-btn" id="btnLaunchGame2">
-        <strong>02: Meteor-Abwehr</strong>
-        <span>Shooter-Strategie im Weltall</span>
-      </button>
-
-      <button class="menu-btn" id="btnLaunchGame3">
-        <strong>03: Roboter-Check</strong>
-        <span>Beweise, dass du kein Bot bist!</span>
-      </button>
-
-            <a href="https://wackna55-netizen.github.io/meteor-ausweichen/" class="menu-btn link-btn">
-        <strong>04: Meteor-Ausweichen & Herzkammern</strong>
-        <span>Weiche Meteoren aus und erkunde die Herzkammern</span>
+        <span>Teste deine Reflexe mit zwei Knöpfen (A &amp; B)</span>
       </a>
 
-      <!-- COMMUNITY FEEDBACK SEKTION -->
-      <div class="feedback-box">
-        <h3>Community Feedback</h3>
-        <div class="feedback-row">
-          <input type="text" id="feedbackText" placeholder="Deine Idee oder dein Feedback..." maxlength="120" />
-          <select id="feedbackSentiment">
-            <option value="up">👍Daumen hoch</option>
-            <option value="down">👎Daumen runter</option>
-          </select>
-          <button id="btnSendFeedback">Absenden</button>
-        </div>
-        <ul id="feedbackList" class="feedback-list"></ul>
-      </div>
+      <a href="./meteor-abwehr/" class="menu-btn">
+        <strong>02: Meteor-Abwehr</strong>
+        <span>Shooter-Strategie im Weltall</span>
+      </a>
+
+      <a href="./roboter-check/" class="menu-btn">
+        <strong>03: Roboter-Check</strong>
+        <span>Beweise, dass du kein Bot bist!</span>
+      </a>
+
+      <a href="https://github.io" class="menu-btn">
+        <strong>04: Meteor-Ausweichen</strong>
+        <span>Betritt die Herzkammer und erkunde die Gefahr!</span>
+      </a>
     </div>
 
-    <!-- SPIEL 1: BLITZ-REAKTION -->
-    <div id="game1Screen" class="screen hidden">
-      <button class="back-btn" onclick="showMenu()">← Zurück zur Auswahl</button>
-      <h2>Blitz-Reaktion</h2>
-      <p class="stats">Letzte Zeit: <span id="reactLast">-</span> ms | Bestzeit: <span id="reactBest">-</span> ms</p>
-      <canvas id="game1Canvas" width="360" height="200"></canvas>
-      <div class="controls-row">
-        <button class="ctrl-btn btn-a" id="btnReactA">A [Blau]</button>
-        <button class="ctrl-btn btn-b" id="btnReactB">B [Lila]</button>
+    <div class="feedback-box">
+      <h3>Community Feedback</h3>
+      <div class="feedback-form">
+        <input type="text" id="feedbackInput" placeholder="Deine Idee oder dein Lob..." maxlength="120" />
+        <select id="feedbackSentiment">
+          <option value="up">👍 Daumen hoch</option>
+          <option value="down">👎 Daumen runter</option>
+        </select>
+        <button id="btnSendFeedback">Absenden</button>
       </div>
-      <div class="leaderboard-box">
-        <div class="lb-header">
-          <h4>Top 5 Schnellste Runs (ms)</h4>
-          <div class="save-row">
-            <input type="text" id="playerNameInput" placeholder="Dein Name" maxlength="12" />
-            <button id="btnSaveScore" disabled>Speichern</button>
-          </div>
-        </div>
-        <ul id="leaderboardList"></ul>
-      </div>
-    </div>
-
-    <!-- SPIEL 2: METEOR-ABWEHR -->
-    <div id="game2Screen" class="screen hidden">
-      <button class="back-btn" onclick="showMenu()">← Zurück zur Auswahl</button>
-      <h2>Meteor-Abwehr</h2>
-      <div class="hud">
-        <span>Punkte: <strong id="mScore">0</strong></span>
-        <span>Munition: <strong id="mAmmo">6 / 6</strong></span>
-      </div>
-      <div class="weapon-bar">
-        <button class="weapon-btn active" data-weapon="single">Einzel (1 DMG)</button>
-        <button class="weapon-btn" data-weapon="double">Doppel</button>
-        <button class="weapon-btn" data-weapon="laser">Laser</button>
-      </div>
-      <canvas id="game2Canvas" width="360" height="360"></canvas>
-      <p class="status-msg" id="mStatus">Klicke auf Start oder Feuer, um zu beginnen!</p>
-      <div class="controls-row">
-        <button class="ctrl-btn" id="btnLeft">Links</button>
-        <button class="ctrl-btn fire" id="btnFire">Feuer [Space]</button>
-        <button class="ctrl-btn" id="btnRight">Rechts</button>
-      </div>
-    </div>
-
-    <!-- SPIEL 3: ROBOTER-CHECK -->
-    <div id="game3Screen" class="screen hidden">
-      <button class="back-btn" onclick="showMenu()">← Zurück zur Auswahl</button>
-      <h2>Roboter-Check</h2>
-      <p id="captchaPrompt">Klicke auf alle Kacheln mit dem passenden Symbol:</p>
-      <div id="captchaGrid" class="captcha-grid"></div>
-      <p class="status-msg" id="captchaStatus">Status: Ausstehend</p>
-      <button class="ctrl-btn" id="btnVerifyCaptcha">Prüfen</button>
+      <ul class="feedback-list" id="feedbackList"></ul>
     </div>
   </div>
 

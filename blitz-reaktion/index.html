@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01: Blitz-Reaktion – Synthwave Arcade</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <div class="game-container">
+    <a href="../" class="back-btn">← Zurück zur Auswahl</a>
+    <h2>01: Blitz-Reaktion</h2>
+
+    <div class="stats">
+      <span>Letzte Zeit: <strong id="reactLast">-</strong> ms</span>
+      <span>Bestzeit: <strong id="reactBest">-</strong> ms</span>
+    </div>
+
+    <canvas id="g1Canvas" width="360" height="200"></canvas>
+
+    <div class="controls">
+      <button id="btnStartG1">Runde starten</button>
+    </div>
+
+    <div class="controls">
+      <button class="btn-a" id="btnReactA">A [Blau]</button>
+      <button class="btn-b" id="btnReactB">B [Lila]</button>
+    </div>
+
+    <div class="leaderboard">
+      <h4>Top 5 Schnellste Runs (ms)</h4>
+      <div class="name-row">
+        <input type="text" id="playerNameInput" placeholder="Dein Name" maxlength="15" />
+        <button id="btnSaveScore" disabled>Speichern</button>
+      </div>
+      <ol id="leaderboardList"></ol>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

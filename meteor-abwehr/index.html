@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02: Meteor-Abwehr – Synthwave Arcade</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <div class="game-container">
+    <a href="../" class="back-btn">← Zurück zur Auswahl</a>
+    <h2>02: Meteor-Abwehr</h2>
+
+    <div class="hud">
+      <span>Punkte: <strong id="mScore">0</strong></span>
+      <span>Munition: <strong id="mAmmo">6 / 6</strong></span>
+    </div>
+
+    <div class="weapon-bar">
+      <button class="weapon-btn active" data-weapon="single">Einzel (1 DMG)</button>
+      <button class="weapon-btn" data-weapon="double">Doppel-Laser (2 DMG)</button>
+    </div>
+
+    <p id="mStatus" class="subtitle">Klicke auf Start / Feuer, um zu beginnen!</p>
+
+    <canvas id="g2Canvas" width="360" height="360"></canvas>
+
+    <div class="controls">
+      <button id="btnLeft">◀ Links</button>
+      <button id="btnFire">Feuer [Space]</button>
+      <button id="btnRight">Rechts ▶</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

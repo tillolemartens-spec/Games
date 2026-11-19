@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>16-Bit Space Shooter</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: #090b14;
+    color: #e2e8f0;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 12px;
+  }
+  .hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    background: #13182b;
+    border: 2px solid #2d3759;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .hud span { color: #38bdf8; }
+  canvas {
+    background: #05070e;
+    border-left: 2px solid #2d3759;
+    border-right: 2px solid #2d3759;
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+  }
+  .controls {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    gap: 10px;
+    background: #13182b;
+    border: 2px solid #2d3759;
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+  }
+  button {
+    flex: 1;
+    padding: 16px;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: inherit;
+    background: #1e293b;
+    color: #f8fafc;
+    border: 2px solid #475569;
+    border-radius: 6px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:active { background: #38bdf8; color: #090b14; }
+  #restartBtn {
+    display: none;
+    background: #10b981;
+    color: #052e16;
+    border-color: #34d399;
+  }
+</style>
+</head>
+<body>
+
+<div class="hud">
+  <div>PUNKTE: <span id="scoreEl">0</span></div>
+  <div>WELLE: <span id="waveEl">1</span></div>
+  <div>SCHIFF: <span id="shipLvlEl">Lv1</span></div>
+  <div>WAFFE: <span id="wepLvlEl">Lv1</span></div>
+  <div>LEBEN: <span id="hpEl">3</span></div>
+</div>
+
+<canvas id="gameCanvas" width="480" height="540"></canvas>
+
+<div class="controls">
+  <button id="leftBtn">◀️ LINKS</button>
+  <button id="restartBtn">NEUSTART</button>
+  <button id="rightBtn">RECHTS ▶️</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const scoreEl = document.getElementById('scoreEl');
+const waveEl = document.getElementById('waveEl');
+const shipLvlEl = document.getElementById('shipLvlEl');
+const wepLvlEl = document.getElementById('wepLvlEl');
+const hpEl = document.getElementById('hpEl');
+const restartBtn = document.getElementById('restartBtn');
+
+let score = 0;
+let wave = 1;
+let gameOver = false;
+let frame = 0;
+
+const keys = { left: false, right: false };
+
+const player = {
+  x: canvas.width / 2,
+  y: canvas.height - 55,
+  w: 32,
+  h: 32,
+  speed: 5.5,
+  hp: 3,
+  maxHp: 5,
+  shipLvl: 1,
+  wepLvl: 1,
+  fireCooldown: 0
+};
+
+let bullets = [];
+let enemyBullets = [];
+let enemies = [];
+let tokens = [];
+let particles = [];
+let stars = Array.from({ length: 60 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  s: Math.random() * 2 + 1
+}));
+
+// Pixel-Art Schiff zeichnen (verändert sich je nach shipLvl)
+function drawPlayer() {
+  const x = Math.round(player.x);
+  const y = Math.round(player.y);
+  const lvl = player.shipLvl;
+
+  // Triebwerksflamme
+  ctx.fillStyle = frame % 4 < 2 ? '#f97316' : '#facc15';
+  ctx.fillRect(x - 4, y + 14, 8, 8 + (frame % 3) * 2);
+  if (lvl >= 2) {
+    ctx.fillRect(x - 14, y + 12, 5, 6);
+    ctx.fillRect(x + 9, y + 12, 5, 6);
+  }
+
+  // Hauptkörper
+  ctx.fillStyle = lvl === 1 ? '#94a3b8' : lvl === 2 ? '#38bdf8' : '#f59e0b';
+  ctx.fillRect(x - 6, y - 16, 12, 30);
+  ctx.fillRect(x - 14, y - 2, 28, 14);
+
+  // Erweiterte Flügel ab Level 2 & 3
+  if (lvl >= 2) {
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(x - 22, y + 2, 8, 12);
+    ctx.fillRect(x + 14, y + 2, 8, 12);
+  }
+  if (lvl >= 3) {
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x - 26, y - 4, 4, 16);
+    ctx.fillRect(x + 22, y - 4, 4, 16);
+  }
+
+  // Cockpit
+  ctx.fillStyle = '#22d3ee';
+  ctx.fillRect(x - 3, y - 8, 6, 10);
+}
+
+// Gegner zeichnen
+function drawEnemy(e) {
+  const x = Math.round(e.x);
+  const y = Math.round(e.y);
+
+  if (e.isBoss) {
+    ctx.fillStyle = '#9333ea';
+    ctx.fillRect(x - 48, y - 24, 96, 44);
+    ctx.fillStyle = '#c084fc';
+    ctx.fillRect(x - 36, y - 16, 72, 24);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x - 16, y - 6, 10, 10);
+    ctx.fillRect(x + 6, y - 6, 10, 10);
+
+    // Boss HP-Leiste
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(x - 45, y - 36, 90, 6);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x - 45, y - 36, 90 * (e.hp / e.maxHp), 6);
+    return;
+  }
+
+  ctx.fillStyle = e.type === 1 ? '#ef4444' : '#22c55e';
+  ctx.fillRect(x - 12, y - 10, 24, 18);
+  ctx.fillRect(x - 16, y - 4, 32, 8);
+  ctx.fillStyle = '#fef08a';
+  ctx.fillRect(x - 7, y - 3, 4, 4);
+  ctx.fillRect(x + 3, y - 3, 4, 4);
+}
+
+function spawnWave() {
+  if (wave % 4 === 0) {
+    // Boss-Welle
+    enemies.push({
+      x: canvas.width / 2,
+      y: 80,
+      w: 96,
+      h: 44,
+      hp: 35 + wave * 8,
+      maxHp: 35 + wave * 8,
+      vx: 2.2,
+      isBoss: true,
+      shootTimer: 40
+    });
+  } else {
+    const rows = Math.min(2 + Math.floor(wave / 2), 4);
+    const cols = 6;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        enemies.push({
+          x: 65 + c * 68,
+          y: 55 + r * 44,
+          w: 30,
+          h: 22,
+          hp: 1 + Math.floor(wave / 3),
+          vx: (1.2 + wave * 0.15) * (r % 2 === 0 ? 1 : -1),
+          type: r % 2,
+          isBoss: false,
+          shootTimer: Math.floor(Math.random() * 140) + 60
+        });
+      }
+    }
+  }
+}
+
+function createExplosion(x, y, color, count = 18) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 4 + 1;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: Math.floor(Math.random() * 4) + 3,
+      color: i % 2 === 0 ? color : '#facc15',
+      life: 25 + Math.random() * 15
+    });
+  }
+}
+
+function shootPlayer() {
+  const lvl = player.wepLvl;
+  if (lvl === 1) {
+    bullets.push({ x: player.x, y: player.y - 18, vx: 0, vy: -8, color: '#38bdf8', dmg: 1 });
+  } else if (lvl === 2) {
+    bullets.push({ x: player.x - 10, y: player.y - 14, vx: 0, vy: -8.5, color: '#22d3ee', dmg: 1 });
+    bullets.push({ x: player.x + 10, y: player.y - 14, vx: 0, vy: -8.5, color: '#22d3ee', dmg: 1 });
+  } else {
+    // Streuschuss + starker Mittellaser
+    bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -9.5, color: '#facc15', dmg: 2 });
+    bullets.push({ x: player.x - 12, y: player.y - 12, vx: -1.8, vy: -8.5, color: '#f97316', dmg: 1 });
+    bullets.push({ x: player.x + 12, y: player.y - 12, vx: 1.8, vy: -8.5, color: '#f97316', dmg: 1 });
+  }
+}
+
+function updateHUD() {
+  scoreEl.textContent = score;
+  waveEl.textContent = wave;
+  shipLvlEl.textContent = 'Lv' + player.shipLvl;
+  wepLvlEl.textContent = 'Lv' + player.wepLvl;
+  hpEl.textContent = player.hp;
+}
+
+function update() {
+  if (gameOver) return;
+  frame++;
+
+  // Sterne bewegen
+  stars.forEach(s => {
+    s.y += s.s;
+    if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+  });
+
+  // Spieler bewegen
+  const moveSpeed = player.speed + (player.shipLvl - 1) * 0.8;
+  if (keys.left) player.x -= moveSpeed;
+  if (keys.right) player.x += moveSpeed;
+  player.x = Math.max(26, Math.min(canvas.width - 26, player.x));
+
+  // Automatisches Feuern
+  if (player.fireCooldown > 0) player.fireCooldown--;
+  else {
+    shootPlayer();
+    player.fireCooldown = Math.max(10, 18 - player.wepLvl * 2);
+  }
+
+  // Spieler-Schüsse
+  bullets.forEach(b => { b.x += b.vx; b.y += b.vy; });
+  bullets = bullets.filter(b => b.y > -20);
+
+  // Gegner
+  enemies.forEach(e => {
+    e.x += e.vx;
+    const margin = e.isBoss ? 55 : 22;
+    if (e.x < margin || e.x > canvas.width - margin) {
+      e.vx *= -1;
+      if (!e.isBoss) e.y += 14;
+    }
+
+    e.shootTimer--;
+    if (e.shootTimer <= 0) {
+      enemyBullets.push({ x: e.x, y: e.y + 14, vy: e.isBoss ? 4.5 : 3.5 });
+      e.shootTimer = e.isBoss ? 35 : Math.max(60, 150 - wave * 5);
+    }
+
+    if (!e.isBoss && e.y > player.y - 20) {
+      player.hp = 0;
+    }
+  });
+
+  // Treffer auf Gegner prüfen
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+      if (Math.abs(b.x - e.x) < e.w / 2 + 4 && Math.abs(b.y - e.y) < e.h / 2 + 6) {
+        e.hp -= b.dmg;
+        bullets.splice(i, 1);
+        createExplosion(b.x, b.y, '#38bdf8', 5);
+
+        if (e.hp <= 0) {
+          score += e.isBoss ? 1500 : 100;
+          createExplosion(e.x, e.y, e.isBoss ? '#c084fc' : '#ef4444', e.isBoss ? 45 : 18);
+
+          // Upgrade-Token droppen (25% Chance oder 100% beim Boss)
+          if (e.isBoss || Math.random() < 0.25) {
+            tokens.push({
+              x: e.x,
+              y: e.y,
+              type: Math.random() < 0.5 ? 'SHIP' : 'WEP',
+              vy: 2.4
+            });
+          }
+          enemies.splice(j, 1);
+        }
+        break;
+      }
+    }
+  }
+
+  // Gegner-Schüsse
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    const eb = enemyBullets[i];
+    eb.y += eb.vy;
+    if (Math.abs(eb.x - player.x) < 16 && Math.abs(eb.y - player.y) < 16) {
+      enemyBullets.splice(i, 1);
+      player.hp--;
+      createExplosion(player.x, player.y, '#f97316', 15);
+    } else if (eb.y > canvas.height) {
+      enemyBullets.splice(i, 1);
+    }
+  }
+
+  // Upgrade-Tokens
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const t = tokens[i];
+    t.y += t.vy;
+    if (Math.abs(t.x - player.x) < 24 && Math.abs(t.y - player.y) < 24) {
+      if (t.type === 'SHIP') {
+        player.shipLvl = Math.min(3, player.shipLvl + 1);
+        player.hp = Math.min(player.maxHp, player.hp + 1);
+      } else {
